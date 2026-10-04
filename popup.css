@@ -3,6 +3,7 @@
   --bg: #ffffff;
   --fg: #0e0e10;
   --muted: #53535f;
+  --rule: #d3d3d9;
   --accent: #9146ff;
 }
 
@@ -11,12 +12,17 @@
     --bg: #18181b;
     --fg: #efeff1;
     --muted: #adadb8;
+    --rule: #3a3a3d;
   }
+}
+
+[hidden] {
+  display: none !important;
 }
 
 body {
   box-sizing: border-box;
-  width: 280px;
+  width: 300px;
   margin: 0;
   padding: 14px 16px;
   background: var(--bg);
@@ -26,19 +32,39 @@ body {
 
 .row {
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.row:last-child {
-  margin-bottom: 0;
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.check input {
+  margin: 2px 0 0;
 }
 
 .toggle {
-  display: flex;
   align-items: center;
-  gap: 8px;
   font-weight: 600;
-  cursor: pointer;
+}
+
+.toggle input {
+  margin: 0;
+}
+
+small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 4px 0 12px;
 }
 
 .label {
@@ -73,6 +99,18 @@ select {
   display: flex;
   justify-content: space-between;
   margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.live {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.keys {
+  margin: 0;
   color: var(--muted);
   font-size: 11px;
 }

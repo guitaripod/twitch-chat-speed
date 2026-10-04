@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <label class="row toggle">
+  <label class="row check toggle">
     <input type="checkbox" id="enabled">
     <span>Slow down chat</span>
   </label>
@@ -17,13 +17,38 @@
       <output id="rateLabel"></output>
     </div>
     <input type="range" id="rate" min="0" step="1">
-    <div class="scale"><span>slower</span><span>faster</span></div>
+    <div class="scale"><span>slower</span><span>native</span></div>
+    <div class="live" id="live"></div>
   </div>
 
   <label class="row">
     <span class="label">Skip messages older than</span>
     <select id="maxLag"></select>
   </label>
+
+  <label class="row check" id="channelRow" hidden>
+    <input type="checkbox" id="channelOverride">
+    <span id="channelText"></span>
+  </label>
+
+  <hr>
+
+  <label class="row check">
+    <input type="checkbox" id="pacing">
+    <span>Pace by reading time<small>Long messages hold the line longer than short ones.</small></span>
+  </label>
+
+  <label class="row check">
+    <input type="checkbox" id="collapse">
+    <span>Fold repeated messages<small>Identical messages show once with a count.</small></span>
+  </label>
+
+  <label class="row check">
+    <input type="checkbox" id="priority">
+    <span>Always show important lines<small>Mentions of you, broadcaster, moderators and staff, subs and raids skip the queue.</small></span>
+  </label>
+
+  <p class="keys">Alt+Up / Alt+Down change speed. Alt+P holds chat.</p>
 
   <script src="shared.js"></script>
   <script src="popup.js"></script>

@@ -5,20 +5,50 @@
 #tcs-badge {
   position: fixed;
   z-index: 2147483000;
-  padding: 2px 8px;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  border-radius: 12px;
   background: rgba(24, 24, 27, 0.78);
   color: #efeff1;
-  font: 600 11px/18px Inter, Roboto, sans-serif;
-  cursor: pointer;
+  font: 600 11px/22px Inter, Roboto, sans-serif;
+  opacity: 0.6;
+  transition: opacity 0.15s;
   user-select: none;
   white-space: nowrap;
 }
 
 #tcs-badge:hover {
-  background: rgba(145, 70, 255, 0.9);
+  opacity: 1;
 }
 
 #tcs-badge[hidden] {
   display: none;
+}
+
+#tcs-badge button {
+  all: unset;
+  display: inline-block;
+  width: 18px;
+  border-radius: 9px;
+  text-align: center;
+  cursor: pointer;
+}
+
+#tcs-badge button:hover {
+  background: rgba(145, 70, 255, 0.9);
+}
+
+#tcs-badge .tcs-label {
+  padding: 0 4px;
+}
+
+.tcs-count {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: rgba(145, 70, 255, 0.35);
+  font-size: 0.85em;
+  font-weight: 700;
 }
