@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Twitch Chat Speed</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <label class="row toggle">
+    <input type="checkbox" id="enabled">
+    <span>Slow down chat</span>
+  </label>
+
+  <div class="row">
+    <div class="label">
+      <span>Speed</span>
+      <output id="rateLabel"></output>
+    </div>
+    <input type="range" id="rate" min="0" step="1">
+    <div class="scale"><span>slower</span><span>faster</span></div>
+  </div>
+
+  <label class="row">
+    <span class="label">Skip messages older than</span>
+    <select id="maxLag"></select>
+  </label>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

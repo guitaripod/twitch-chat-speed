@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Twitch Chat Speed",
+  "version": "1.0.0",
+  "description": "Choose how fast Twitch chat moves. Releases messages at a rate you pick so busy chats stay readable.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.twitch.tv/*"],
+      "js": ["shared.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Twitch Chat Speed",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  }
+}

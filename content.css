@@ -1,0 +1,24 @@
+[data-tcs-hidden] {
+  display: none !important;
+}
+
+#tcs-badge {
+  position: fixed;
+  z-index: 2147483000;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(24, 24, 27, 0.78);
+  color: #efeff1;
+  font: 600 11px/18px Inter, Roboto, sans-serif;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+#tcs-badge:hover {
+  background: rgba(145, 70, 255, 0.9);
+}
+
+#tcs-badge[hidden] {
+  display: none;
+}
