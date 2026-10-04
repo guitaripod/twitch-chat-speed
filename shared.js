@@ -1,4 +1,5 @@
-const RATE_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 15, 20];
+const NATIVE_RATE = 0;
+const RATE_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 15, 20, NATIVE_RATE];
 const LAG_STEPS = [2, 3, 5, 10, 0];
 const DEFAULTS = { enabled: true, rate: 4, maxLag: 3 };
 

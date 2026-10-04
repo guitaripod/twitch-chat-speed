@@ -23,10 +23,10 @@ let badge = null;
 let wasActive = true;
 
 /**
- * Whether throttling applies right now: enabled, and not a VOD where chat follows the video.
+ * Whether throttling applies right now: enabled, not set to native speed, and not a VOD where chat follows the video.
  */
 function isActive() {
-  return settings.enabled && !location.pathname.startsWith('/videos/');
+  return settings.enabled && settings.rate !== NATIVE_RATE && !location.pathname.startsWith('/videos/');
 }
 
 /**

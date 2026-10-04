@@ -14,7 +14,8 @@ function lagLabel(seconds) {
  * Shows the slider's current rate next to its label.
  */
 function renderRate() {
-  rateLabel.textContent = `${RATE_STEPS[Number(rateInput.value)]} messages/sec`;
+  const rate = RATE_STEPS[Number(rateInput.value)];
+  rateLabel.textContent = rate === NATIVE_RATE ? 'Native (no limit)' : `${rate} messages/sec`;
 }
 
 /**

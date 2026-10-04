@@ -1,6 +1,6 @@
 # Twitch Chat Speed
 
-Chromium extension that releases Twitch chat messages at a rate you choose (1 to 20 per second) so busy chats stay readable. Messages that would make chat fall further behind than your limit are skipped; your own messages always appear instantly.
+Chromium extension that releases Twitch chat messages at a rate you choose (1 to 20 per second, or native speed at the top of the slider) so busy chats stay readable. Messages that would make chat fall further behind than your limit are skipped; your own messages always appear instantly.
 
 Works with the Twitch Anti-Ban proxy chat too.
 
