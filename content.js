@@ -3,7 +3,7 @@ const CHAT_INPUT_SELECTOR = '[data-a-target="chat-input"]';
 const SEND_BUTTON_SELECTOR = '[data-a-target="chat-send-button"]';
 const BODY_SELECTOR = '[data-a-target="chat-line-message-body"]';
 const NOTICE_SELECTOR = '.user-notice-line, .chat-line__status';
-const MENTION_SELECTOR = '.mention-fragment--recipient';
+const PRIORITY_SELECTOR = `${NOTICE_SELECTOR}, .mention-fragment--recipient`;
 const LOCAL_MESSAGE_ID_PREFIX = 'anti-ban-local-';
 const POPOUT_ROUTES = ['popout', 'embed', 'moderator'];
 const PRIORITY_BADGE_IDS = [
@@ -13,7 +13,9 @@ const PRIORITY_BADGE_IDS = [
 ];
 const PRIORITY_BADGE_ALT = /^(broadcaster|moderator|staff|admin)$/i;
 const HIDDEN_ATTR = 'data-tcs-hidden';
-const TICK_MS = 40;
+const MIN_WAIT_MS = 16;
+const MAX_WAIT_MS = 250;
+const CONTAINER_RECHECK_TICKS = 10;
 const HOUSEKEEPING_MS = 500;
 const RATE_WINDOW_BUCKETS = 10;
 const MAX_CREDIT = 2;
@@ -45,6 +47,8 @@ let timer = null;
 let pendingOwn = null;
 let badge = null;
 let wasActive = true;
+let housekeepingTicks = 0;
+let badgeLayout = '';
 let ownLogin = null;
 let mentionPattern = null;
 let arrivals = 0;
@@ -118,8 +122,9 @@ function readingCost(body) {
  */
 function makeEntry(node) {
   const body = bodyOf(node);
-  const key = body ? contentTokens(body).join(' ').toLowerCase() : '';
-  return { node, key, cost: body ? readingCost(body) : 1, count: 1, keep: false, at: 0 };
+  const key = body && settings.collapse ? contentTokens(body).join(' ').toLowerCase() : '';
+  const cost = body && settings.pacing === 'reading' ? readingCost(body) : 1;
+  return { node, key, cost, count: 1, keep: false, at: 0 };
 }
 
 /**
@@ -164,17 +169,17 @@ function readOwnLogin() {
  * Whether a chat line carries a broadcaster, moderator or staff badge.
  */
 function hasPriorityBadge(node) {
-  return Array.from(node.querySelectorAll('img')).some(
-    (img) => PRIORITY_BADGE_ALT.test(img.alt) || PRIORITY_BADGE_IDS.some((id) => img.src.includes(id))
-  );
+  for (const img of node.querySelectorAll('img')) {
+    if (PRIORITY_BADGE_ALT.test(img.alt) || PRIORITY_BADGE_IDS.some((id) => img.src.includes(id))) return true;
+  }
+  return false;
 }
 
 /**
  * Whether a chat line is worth showing at once: alerts, mentions of the user, and broadcaster, moderator or staff messages.
  */
 function isPriority(node) {
-  if (node.matches(NOTICE_SELECTOR) || node.querySelector(NOTICE_SELECTOR)) return true;
-  if (node.querySelector(MENTION_SELECTOR)) return true;
+  if (node.matches(NOTICE_SELECTOR) || node.querySelector(PRIORITY_SELECTOR)) return true;
   if (mentionPattern?.test(node.textContent)) return true;
   return hasPriorityBadge(node);
 }
@@ -276,7 +281,8 @@ function absorbDuplicate(entry) {
 }
 
 /**
- * Releases queued lines as the token bucket allows; long messages cost more when pacing by reading time.
+ * Releases queued lines as the token bucket allows, then sleeps until the next one is due.
+ * Long messages cost more when pacing by reading time.
  */
 function pump() {
   if (paused) return;
@@ -293,21 +299,25 @@ function pump() {
   }
   reveal(due.map((entry) => entry.node));
   for (const entry of due) remember(entry, now);
-  if (!queue.length) stopTimer();
+  scheduleNext();
 }
 
 /**
- * Keeps releasing on a steady tick while lines are waiting.
+ * Wakes the pump when the next queued line becomes due, instead of polling on a fixed tick.
  */
-function ensureTimer() {
-  if (!timer && queue.length && !paused) timer = setInterval(pump, TICK_MS);
+function scheduleNext() {
+  clearTimeout(timer);
+  timer = null;
+  if (!queue.length || paused) return;
+  const due = ((1 - credit) / settings.rate) * 1000;
+  timer = setTimeout(pump, Math.min(MAX_WAIT_MS, Math.max(MIN_WAIT_MS, due)));
 }
 
 /**
- * Stops the release tick.
+ * Cancels the pending release.
  */
 function stopTimer() {
-  clearInterval(timer);
+  clearTimeout(timer);
   timer = null;
 }
 
@@ -315,8 +325,8 @@ function stopTimer() {
  * Permanently skips the oldest droppable lines beyond the lag limit; kept lines are never skipped.
  */
 function enforceCap() {
-  if (paused) return;
   const cap = queueCap();
+  if (paused || cap === Infinity) return;
   let droppable = queue.reduce((total, entry) => total + (entry.keep ? 0 : 1), 0);
   while (droppable > cap) {
     const [entry] = queue.splice(queue.findIndex((candidate) => !candidate.keep), 1);
@@ -352,7 +362,6 @@ function onMutations(records) {
   for (const node of lines) enqueue(node);
   enforceCap();
   pump();
-  ensureTimer();
 }
 
 /**
@@ -389,7 +398,6 @@ function setPaused(next) {
     lastCreditAt = performance.now();
     enforceCap();
     pump();
-    ensureTimer();
   }
   refreshBadge();
 }
@@ -414,7 +422,8 @@ function stepRate(direction) {
  * Follows Twitch's single-page navigation by re-attaching when the message container changes.
  */
 function attach() {
-  const next = document.querySelector(CONTAINER_SELECTOR);
+  const trusted = container?.isConnected && housekeepingTicks % CONTAINER_RECHECK_TICKS;
+  const next = trusted ? container : document.querySelector(CONTAINER_SELECTOR);
   if (next === container) return;
   observer?.disconnect();
   resetState();
@@ -436,12 +445,16 @@ function updateChatRate() {
 }
 
 /**
- * Drops repeat-tracking entries that are too old to absorb anything.
+ * Drops repeat-tracking entries that are too old to absorb anything, and queued lines Twitch already removed.
  */
-function pruneRecent() {
+function prune() {
   const now = performance.now();
   for (const [key, entry] of recent) {
     if (now - entry.at > RECENT_MS) recent.delete(key);
+  }
+  if (queue.some((entry) => !entry.node.isConnected)) {
+    for (const entry of queue) if (!entry.node.isConnected) forget(entry);
+    queue = queue.filter((entry) => entry.node.isConnected);
   }
 }
 
@@ -514,9 +527,15 @@ function refreshBadge() {
   }
   const el = ensureBadge();
   el.hidden = false;
-  el.style.top = `${rect.top + 6}px`;
-  el.style.right = `${document.documentElement.clientWidth - rect.right + 18}px`;
-  el.querySelector('.tcs-label').textContent = badgeLabel();
+  const top = `${rect.top + 6}px`;
+  const right = `${document.documentElement.clientWidth - rect.right + 18}px`;
+  const label = badgeLabel();
+  const layout = `${top} ${right} ${label} ${paused} ${skipped} ${collapsed}`;
+  if (layout === badgeLayout) return;
+  badgeLayout = layout;
+  el.style.top = top;
+  el.style.right = right;
+  el.querySelector('.tcs-label').textContent = label;
   el.querySelector('[data-action="pause"]').textContent = paused ? '▶' : '⏸';
   el.title = badgeTitle();
 }
@@ -525,8 +544,12 @@ function refreshBadge() {
  * Reacts to a settings change: un-throttle when off or native, re-trim the queue otherwise.
  */
 function applySettings() {
-  if (isActive()) enforceCap();
-  else flush();
+  if (isActive()) {
+    enforceCap();
+    pump();
+  } else {
+    flush();
+  }
   wasActive = isActive();
   refreshBadge();
 }
@@ -542,6 +565,7 @@ function resolve() {
  * Periodic upkeep: channel and container changes, VOD navigation, login lookup, live rate, control position.
  */
 function housekeeping() {
+  housekeepingTicks += 1;
   const nextChannel = channelFromPath();
   if (nextChannel !== channel) {
     channel = nextChannel;
@@ -557,7 +581,7 @@ function housekeeping() {
   if (wasActive && !active) flush();
   wasActive = active;
   updateChatRate();
-  pruneRecent();
+  prune();
   refreshBadge();
 }
 
