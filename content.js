@@ -1,4 +1,5 @@
-const CONTAINER_SELECTOR = '.chat-scrollable-area__message-container';
+const CONTAINER_SELECTOR = '.chat-scrollable-area__message-container, #anti-ban-chat';
+const LOCAL_MESSAGE_ID_PREFIX = 'anti-ban-local-';
 const CHAT_INPUT_SELECTOR = '[data-a-target="chat-input"]';
 const SEND_BUTTON_SELECTOR = '[data-a-target="chat-send-button"]';
 const HIDDEN_ATTR = 'data-tcs-hidden';
@@ -55,9 +56,10 @@ function rememberSentMessage(input) {
 }
 
 /**
- * Whether a new chat line is the echo of the message the user just sent; consumes the match.
+ * Whether a new chat line is the user's own: a locally rendered Twitch Anti-Ban message, or the echo of what they just sent (consumed on match).
  */
 function isOwnMessage(node) {
+  if (node.getAttribute('data-id')?.startsWith(LOCAL_MESSAGE_ID_PREFIX)) return true;
   if (!pendingOwn) return false;
   if (performance.now() > pendingOwn.until) {
     pendingOwn = null;
