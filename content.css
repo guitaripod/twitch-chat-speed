@@ -10,17 +10,13 @@
   gap: 2px;
   padding: 0 4px;
   border-radius: 12px;
-  background: rgba(24, 24, 27, 0.78);
+  border: 1px solid #3a3a3d;
+  background: #26262c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   color: #efeff1;
   font: 600 11px/22px Inter, Roboto, sans-serif;
-  opacity: 0.6;
-  transition: opacity 0.15s;
   user-select: none;
   white-space: nowrap;
-}
-
-#tcs-badge:hover {
-  opacity: 1;
 }
 
 #tcs-badge[hidden] {

@@ -203,11 +203,18 @@ function findScroller() {
 }
 
 /**
+ * The visible chat pane: the scrollable ancestor, falling back to the container itself.
+ */
+function chatViewport() {
+  if (!scroller?.isConnected) scroller = findScroller();
+  return scroller ?? container;
+}
+
+/**
  * Whether chat is pinned to the newest message, as opposed to scrolled up by the user.
  */
 function isAtBottom() {
-  if (!scroller?.isConnected) scroller = findScroller();
-  if (!scroller) return false;
+  if (!chatViewport() || !scroller) return false;
   return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= BOTTOM_TOLERANCE_PX;
 }
 
@@ -500,7 +507,7 @@ function badgeTitle() {
  * Pins the control to the chat's top-right corner and updates its text.
  */
 function refreshBadge() {
-  const rect = container?.getBoundingClientRect();
+  const rect = container ? chatViewport()?.getBoundingClientRect() : null;
   if (!rect || !rect.width || !isEnabledHere()) {
     if (badge) badge.hidden = true;
     return;
